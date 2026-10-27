@@ -501,14 +501,16 @@
   "use strict";
 
   /* ================= Cấu hình ================= */
-  var OUT = 1080;              // kích thước ảnh xuất ra
+  var OUT = 1600;              // kích thước ảnh xuất ra (px)
+  var REF = 1080;              // hệ toạ độ gốc của các thông số hình học bên dưới
+  var K = OUT / REF;           // hệ số quy đổi từ REF sang OUT
   var CX = OUT / 2;
   var HOLE_R = 382;            // bán kính lỗ trống thật của khung
   var AVATAR_R = 402;          // ảnh được cắt rộng hơn lỗ một chút, phần dư nằm dưới viền xanh của khung
   var RIM_START = 345;         // bắt đầu làm mềm viền
   var VIEW = 720;              // hệ toạ độ vùng xem trước
   var MAX_FILE = 25 * 1024 * 1024;
-  var MAX_SIDE = 2560;         // thu nhỏ ảnh quá lớn để tránh tràn bộ nhớ trên điện thoại
+  var MAX_SIDE = 3200;         // thu nhỏ ảnh quá lớn để tránh tràn bộ nhớ trên điện thoại
   var MIN_SIDE = OUT;          // ảnh có cạnh ngắn nhỏ hơn mức này sẽ được tự động phóng to
   var MAX_ZOOM = 4;
   var DEFAULT_BLUR = 24;
@@ -750,7 +752,7 @@
       drawPhoto(ctx, VIEW, scale, ox, oy, false);
     }
 
-    var R = VIEW * (HOLE_R / OUT);
+    var R = VIEW * (HOLE_R / REF);
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, VIEW, VIEW);
@@ -1028,7 +1030,7 @@
       c.fillRect(0, 0, OUT, OUT);
       drawPhoto(c, OUT, scale, ox, oy, true);
     } else {
-      drawCoverBackground(c, OUT, 36);
+      drawCoverBackground(c, OUT, 36 * K);
       drawPhoto(c, OUT, scale, ox, oy, false);
     }
     return out;
@@ -1063,10 +1065,10 @@
     var c = out.getContext("2d");
     c.imageSmoothingEnabled = true;
     c.imageSmoothingQuality = "high";
-    drawBlurredBackground(c, crop, OUT, currentBlur);
+    drawBlurredBackground(c, crop, OUT, currentBlur * K);
     c.fillStyle = "rgba(255,255,255,0.10)";
     c.fillRect(0, 0, OUT, OUT);
-    var halo = c.createRadialGradient(CX, CX, 480, CX, CX, 585);
+    var halo = c.createRadialGradient(CX, CX, 480 * K, CX, CX, 585 * K);
     halo.addColorStop(0, "rgba(20,32,64,0)");
     halo.addColorStop(0.42, "rgba(20,32,64,0.28)");
     halo.addColorStop(1, "rgba(20,32,64,0)");
@@ -1074,21 +1076,21 @@
     c.fillRect(0, 0, OUT, OUT);
     c.save();
     c.beginPath();
-    c.arc(CX, CX, AVATAR_R, 0, Math.PI * 2);
+    c.arc(CX, CX, AVATAR_R * K, 0, Math.PI * 2);
     c.clip();
     c.drawImage(crop, 0, 0);
     c.restore();
-    var soft = softFocusCanvas(crop, OUT, BLUR_RING);
+    var soft = softFocusCanvas(crop, OUT, BLUR_RING * K);
     var sc = soft.getContext("2d");
     sc.globalCompositeOperation = "destination-in";
-    var fade = sc.createRadialGradient(CX, CX, RIM_START, CX, CX, AVATAR_R);
+    var fade = sc.createRadialGradient(CX, CX, RIM_START * K, CX, CX, AVATAR_R * K);
     fade.addColorStop(0, "rgba(0,0,0,0)");
     fade.addColorStop(1, "rgba(0,0,0,1)");
     sc.fillStyle = fade;
     sc.fillRect(0, 0, OUT, OUT);
     c.save();
     c.beginPath();
-    c.arc(CX, CX, AVATAR_R, 0, Math.PI * 2);
+    c.arc(CX, CX, AVATAR_R * K, 0, Math.PI * 2);
     c.clip();
     c.drawImage(soft, 0, 0);
     c.restore();
