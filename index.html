@@ -4,11 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#2b4ea2" />
+<meta name="color-scheme" content="light" />
 <title>Khung ảnh kỷ niệm 20 năm – Trường THPT Tam Dương II (2006 – 2026)</title>
-<meta name="description" content="Tạo khung avatar kỷ niệm 20 năm thành lập Trường THPT Tam Dương II (2006 – 2026). Chọn ảnh, chọn khung, cắt ghép 1:1 và tải về máy chỉ trong vài chạm." />
+<meta name="description" content="Tạo khung avatar kỷ niệm 20 năm thành lập Trường THPT Tam Dương II (2006 – 2026). Chọn ảnh, cắt ghép 1:1 và tải về máy chỉ trong vài chạm." />
 <meta property="og:title" content="Khung ảnh kỷ niệm 20 năm – THPT Tam Dương II" />
 <meta property="og:description" content="Tạo avatar kỷ niệm 20 năm thành lập Trường THPT Tam Dương II (2006 – 2026) ngay trên điện thoại." />
 <meta property="og:type" content="website" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%232b4ea2'/%3E%3Ctext x='32' y='42' font-family='Arial' font-weight='800' font-size='28' text-anchor='middle' fill='white'%3E20%3C/text%3E%3C/svg%3E" />
+<link rel="preload" as="image" href="khung1.png" />
 <style>
   :root {
     --brand: #2b4ea2;
@@ -39,6 +42,7 @@
     line-height: 1.4;
     -webkit-user-select: none;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
   button { font-family: inherit; }
   :focus-visible { outline: 3px solid rgba(43,78,162,.55); outline-offset: 2px; }
@@ -146,11 +150,12 @@
     border-radius: 18px;
     padding: 20px;
     cursor: pointer;
-    transition: border-color .15s, background .15s;
-    -webkit-tap-highlight-color: transparent;
+    transition: border-color .15s, background .15s, opacity .15s;
   }
   .dropzone:hover, .dropzone.drag { border-color: rgba(43,78,162,.65); background: var(--brand-soft); }
+  .dropzone.busy { opacity: .6; pointer-events: none; }
   .dropzone .icon {
+    position: relative;
     width: 68px; height: 68px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 999px;
@@ -163,6 +168,17 @@
   .dropzone .label { font-size: 16.5px; font-weight: 700; color: var(--brand-deep); }
   .dropzone .sub { font-size: 12px; color: var(--muted); }
   .privacy { flex: none; text-align: center; font-size: 11.5px; color: var(--muted); }
+  .frame-warn {
+    flex: none;
+    background: #fdecea;
+    border: 1px solid #f3b9b4;
+    color: #8a1c14;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 12px;
+  }
 
   /* ---------- Buttons ---------- */
   .btn {
@@ -180,7 +196,6 @@
     font-weight: 600;
     cursor: pointer;
     transition: background .15s, transform .05s;
-    -webkit-tap-highlight-color: transparent;
   }
   .btn:hover { background: #f4f7fd; }
   .btn:active { transform: scale(.98); }
@@ -190,6 +205,7 @@
   .btn svg { width: 19px; height: 19px; flex-shrink: 0; }
   .btn-icon { width: 38px; min-height: 38px; max-width: 38px; padding: 0; flex-shrink: 0; }
   .btn-icon svg { width: 17px; height: 17px; }
+  .btn-icon[aria-pressed="true"] { background: var(--brand-soft); border-color: var(--brand); }
   .row { display: flex; gap: 8px; flex: none; }
   .row .btn { flex: 1; }
   .row .btn.grow2 { flex: 1.6; }
@@ -240,62 +256,16 @@
   }
   .chip {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 34px; height: 34px;
+    width: 36px; height: 36px;
     border-radius: 999px;
     border: 0;
     background: rgba(20,38,79,.68);
     color: #fff;
     cursor: pointer;
     backdrop-filter: blur(4px);
-    -webkit-tap-highlight-color: transparent;
   }
-  .chip svg { width: 17px; height: 17px; }
+  .chip svg { width: 18px; height: 18px; }
   .chip[aria-pressed="false"] { background: rgba(20,38,79,.4); opacity: .8; }
-
-  .frame-picker { flex: none; display: flex; gap: 8px; }
-  .frame-opt {
-    flex: 1;
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 8px 4px 4px;
-    border: 2px solid var(--border);
-    border-radius: 14px;
-    background: #fff;
-    cursor: pointer;
-    min-width: 0;
-    -webkit-tap-highlight-color: transparent;
-    transition: border-color .15s, box-shadow .15s, background .15s;
-  }
-  .frame-opt .thumb {
-    width: 44px; height: 44px;
-    flex: none;
-    border-radius: 10px;
-    background:
-      conic-gradient(#e3e9f5 25%, #fff 0 50%, #e3e9f5 0 75%, #fff 0) 0 0 / 10px 10px;
-    overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .frame-opt .thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
-  .frame-opt .name { font-size: 12.5px; font-weight: 600; color: var(--brand-deep); }
-  .frame-opt.missing { opacity: .45; }
-  .frame-opt.missing .thumb::after { content: "?"; font-weight: 800; color: var(--muted); }
-  .frame-opt.active {
-    border-color: var(--brand);
-    background: var(--brand-soft);
-    box-shadow: 0 6px 16px -8px rgba(43,78,162,.6);
-  }
-  .frame-opt.active::after {
-    content: "";
-    position: absolute;
-    top: -6px; right: -6px;
-    width: 18px; height: 18px;
-    border-radius: 999px;
-    background: var(--brand) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") center/11px no-repeat;
-    border: 2px solid #fff;
-  }
-  @media (max-width: 380px) { .frame-opt .name { display: none; } .frame-opt { justify-content: center; padding: 4px; } }
 
   .crop-tools {
     flex: none;
@@ -307,7 +277,7 @@
     flex-direction: column;
     gap: 2px;
   }
-  .ctl { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+  .ctl { display: flex; align-items: center; gap: 8px; min-height: 40px; }
   .ctl > svg { width: 19px; height: 19px; color: var(--brand); flex-shrink: 0; }
   input[type="range"] { flex: 1; min-width: 0; accent-color: var(--brand); height: 28px; cursor: pointer; }
   .adjust-value { min-width: 28px; text-align: right; font-size: 12px; font-weight: 700; color: var(--brand-deep); }
@@ -373,7 +343,7 @@
     text-align: center;
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  #toast.show.err { background: #b3261e; }
+  #toast.show.err { background: #b3261e; border-radius: 16px; }
 
   /* ---------- Footer ---------- */
   .site-footer {
@@ -417,12 +387,13 @@
 
       <!-- BƯỚC 1 -->
       <div class="stage" id="stageUpload">
+        <p class="frame-warn" id="frameWarn" role="alert" hidden>Chưa tìm thấy file <b>khung1.png</b> cùng thư mục với index.html.</p>
         <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Chọn ảnh từ thiết bị">
           <span class="icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="30" height="30" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
           </span>
           <span class="label">Chạm để chọn ảnh của bạn</span>
-          <span class="sub">JPG, PNG, WebP, HEIC • tối đa 25MB<br>Có thể kéo thả hoặc dán ảnh (Ctrl + V)</span>
+          <span class="sub">JPG, PNG, WebP • tối đa 25MB<br>Có thể kéo thả hoặc dán ảnh (Ctrl + V)</span>
         </div>
         <button type="button" class="btn" id="btnCamera">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
@@ -435,7 +406,7 @@
       <div class="stage" id="stageCrop" hidden>
         <div class="view-area">
           <div class="square">
-            <canvas id="cropCanvas" width="720" height="720" tabindex="0" aria-label="Vùng cắt ảnh vuông 1:1. Dùng phím mũi tên để di chuyển, phím + và - để thu phóng, phím 0 để căn giữa."></canvas>
+            <canvas id="cropCanvas" width="720" height="720" tabindex="0" aria-label="Vùng cắt ảnh vuông 1:1. Dùng phím mũi tên để di chuyển, phím + và - để thu phóng, phím 0 để căn giữa, phím F để lật ngang."></canvas>
             <div class="canvas-tools">
               <button type="button" class="chip" id="btnFill" aria-pressed="true" aria-label="Lấp vùng trống bằng hiệu ứng gương hoặc nền mờ" title="Lấp vùng trống: gương / nền mờ">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="M8 7 3 12l5 5V7z"/><path d="m16 7 5 5-5 5V7z"/></svg>
@@ -450,22 +421,23 @@
             <div class="gesture-hint" id="gestureHint">Kéo để di chuyển • chụm hai ngón để thu phóng</div>
             <div class="spinner-overlay" id="cropSpinner">
               <div class="spinner" aria-hidden="true"></div>
-              <span id="spinnerText">Đang ghép khung kỷ niệm...</span>
+              <span>Đang ghép khung kỷ niệm...</span>
             </div>
           </div>
         </div>
-
-        <div class="frame-picker" id="framePicker" role="radiogroup" aria-label="Chọn kiểu khung"></div>
 
         <div class="crop-tools">
           <div class="ctl">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>
             <input type="range" id="zoomSlider" min="0.1" max="4" step="0.01" value="1" aria-label="Thu phóng ảnh" />
-            <button type="button" class="btn btn-icon" id="btnRotateLeft" aria-label="Xoay trái 90 độ">
+            <button type="button" class="btn btn-icon" id="btnRotateLeft" aria-label="Xoay trái 90 độ" title="Xoay trái">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
             </button>
-            <button type="button" class="btn btn-icon" id="btnRotateRight" aria-label="Xoay phải 90 độ">
+            <button type="button" class="btn btn-icon" id="btnRotateRight" aria-label="Xoay phải 90 độ" title="Xoay phải">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            </button>
+            <button type="button" class="btn btn-icon" id="btnFlip" aria-pressed="false" aria-label="Lật ảnh theo chiều ngang" title="Lật ngang">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><path d="M12 20v2M12 14v2M12 8v2M12 2v2"/></svg>
             </button>
           </div>
           <div class="ctl">
@@ -531,7 +503,7 @@
   /* ================= Cấu hình ================= */
   var OUT = 1080;              // kích thước ảnh xuất ra
   var CX = OUT / 2;
-  var HOLE_R = 382;            // bán kính lỗ trống thật của khung (đo từ khung1/khung2.png)
+  var HOLE_R = 382;            // bán kính lỗ trống thật của khung
   var AVATAR_R = 402;          // ảnh được cắt rộng hơn lỗ một chút, phần dư nằm dưới viền xanh của khung
   var RIM_START = 345;         // bắt đầu làm mềm viền
   var VIEW = 720;              // hệ toạ độ vùng xem trước
@@ -544,19 +516,12 @@
   var FRAME_PREVIEW_ALPHA = 0.92;
   var FILE_NAME = "khung-anh-20-nam-thpt-tam-duong-2.jpg";
 
-  /* 2 kiểu khung (khung1 có dự phòng khung.png cho bản cũ) */
-  var FRAMES = [
-    { src: "khung1.png", fallback: "khung.png", name: "Khung 1" },
-    { src: "khung2.png", name: "Khung 2" }
-  ];
+  /* Khung duy nhất (có dự phòng khung.png cho bản cũ) */
+  var FRAME = { src: "khung1.png", fallback: "khung.png", img: null, ok: false };
 
   /* ================= Lưu tuỳ chọn ================= */
   function store(key, val) { try { localStorage.setItem(key, String(val)); } catch (e) {} }
   function load(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
-
-  var frameIndex = 0;
-  var savedFrame = parseInt(load("khung20nam"), 10);
-  if (savedFrame >= 0 && savedFrame < FRAMES.length) frameIndex = savedFrame;
 
   var currentBlur = DEFAULT_BLUR;
   var savedBlur = parseFloat(load("khung20nam_blur"));
@@ -571,77 +536,41 @@
   var dropzone = $("dropzone"), fileInput = $("fileInput"), cameraInput = $("cameraInput");
   var canvas = $("cropCanvas"), ctx = canvas.getContext("2d");
   var zoomSlider = $("zoomSlider"), blurSlider = $("blurSlider"), blurValue = $("blurValue");
-  var resultImg = $("resultImg"), toastEl = $("toast"), spinner = $("cropSpinner"), spinnerText = $("spinnerText");
-  var hint = $("gestureHint"), picker = $("framePicker");
-  var btnShare = $("btnShare"), btnToggleFrame = $("btnToggleFrame");
+  var resultImg = $("resultImg"), toastEl = $("toast"), spinner = $("cropSpinner");
+  var hint = $("gestureHint"), frameWarn = $("frameWarn");
+  var btnShare = $("btnShare"), btnToggleFrame = $("btnToggleFrame"), btnFill = $("btnFill"), btnFlip = $("btnFlip");
+  var btnGenerate = $("btnGenerate");
   var stepItems = document.querySelectorAll("#steps li[data-step]");
 
   var photo = null;               // canvas chứa ảnh đã chuẩn hoá (đúng chiều, đã thu nhỏ)
   var lastBlob = null, resultUrl = null;
-  var scale = 1, ox = 0, oy = 0, rotation = 0;
+  var scale = 1, ox = 0, oy = 0, rotation = 0, flipX = false;
   var toastTimer = null, hintTimer = null, currentStage = 0;
   var drawQueued = false;
   var loadToken = 0;
+  var generating = false;
 
-  /* Cache nền mờ cho xem trước: chỉ tính lại khi đổi ảnh / xoay / độ mờ */
+  /* Cache nền mờ cho xem trước: chỉ tính lại khi đổi ảnh / xoay / lật / độ mờ */
   var bgCache = null, bgKey = "";
   var photoId = 0;
 
   /* ================= Tải khung ================= */
-  function loadFrame(f, thumbImg, optEl) {
-    f.img = new Image();
-    f.ok = false;
+  function loadFrame() {
+    var img = new Image();
     var triedFallback = false;
-    f.img.onload = function () {
-      f.ok = true;
-      thumbImg.src = f.img.src;
-      optEl.classList.remove("missing");
+    FRAME.img = img;
+    img.onload = function () {
+      FRAME.ok = true;
+      frameWarn.hidden = true;
       if (photo) requestDraw();
     };
-    f.img.onerror = function () {
-      if (f.fallback && !triedFallback) { triedFallback = true; f.img.src = f.fallback; return; }
-      f.ok = false;
-      optEl.classList.add("missing");
+    img.onerror = function () {
+      if (FRAME.fallback && !triedFallback) { triedFallback = true; img.src = FRAME.fallback; return; }
+      FRAME.ok = false;
+      frameWarn.hidden = false;
     };
-    f.img.src = f.src;
+    img.src = FRAME.src;
   }
-
-  function buildPicker() {
-    FRAMES.forEach(function (f, i) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "frame-opt" + (i === frameIndex ? " active" : "");
-      b.setAttribute("role", "radio");
-      b.setAttribute("aria-checked", i === frameIndex ? "true" : "false");
-      b.setAttribute("aria-label", f.name);
-      var th = document.createElement("span");
-      th.className = "thumb";
-      var im = document.createElement("img");
-      im.alt = "";
-      th.appendChild(im);
-      var nm = document.createElement("span");
-      nm.className = "name";
-      nm.textContent = f.name;
-      b.appendChild(th);
-      b.appendChild(nm);
-      b.addEventListener("click", function () { selectFrame(i); });
-      picker.appendChild(b);
-      f.btn = b;
-      loadFrame(f, im, b);
-    });
-  }
-  function selectFrame(i) {
-    frameIndex = i;
-    FRAMES.forEach(function (f, k) {
-      f.btn.classList.toggle("active", k === i);
-      f.btn.setAttribute("aria-checked", k === i ? "true" : "false");
-    });
-    store("khung20nam", i);
-    if (!FRAMES[i].ok) toast("Chưa tìm thấy file " + FRAMES[i].src + " cùng thư mục với index.html", true);
-    if (!showFrame) setShowFrame(true);
-    requestDraw();
-  }
-  function curFrame() { return FRAMES[frameIndex]; }
 
   function setShowFrame(v) {
     showFrame = v;
@@ -655,7 +584,7 @@
     toastEl.textContent = msg;
     toastEl.className = isErr ? "show err" : "show";
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toastEl.className = ""; }, 2800);
+    toastTimer = setTimeout(function () { toastEl.className = ""; }, isErr ? 4500 : 2600);
   }
   function showStage(i) {
     currentStage = i;
@@ -666,6 +595,7 @@
       var n = Number(stepItems[k].getAttribute("data-step"));
       stepItems[k].className = n === i ? "active" : (n < i ? "done" : "");
     }
+    if (i === 1) { try { canvas.focus({ preventScroll: true }); } catch (e) {} }
   }
   function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
   function supportsFilter(c) { return typeof c.filter === "string"; }
@@ -719,6 +649,14 @@
     scale = clamp(s, minimumScale(), MAX_ZOOM);
     zoomSlider.value = String(scale);
   }
+  /* Thu phóng quanh một điểm (toạ độ VIEW, gốc ở tâm) để điểm đó đứng yên dưới ngón tay / con trỏ */
+  function zoomAt(newScale, px, py) {
+    var old = scale;
+    setScale(newScale);
+    var r = scale / old;
+    ox = px - (px - ox) * r;
+    oy = py - (py - oy) * r;
+  }
   function resetPosition() {
     ox = 0; oy = 0; scale = 1;
     zoomSlider.min = String(minimumScale());
@@ -734,6 +672,7 @@
     var pw = photo.width * base, ph = photo.height * base;
     c.save();
     c.translate(size / 2 + offsetX * k, size / 2 + offsetY * k);
+    if (flipX) c.scale(-1, 1);          // lật theo chiều ngang màn hình (áp dụng sau khi xoay)
     c.rotate((rotation * Math.PI) / 180);
     c.imageSmoothingEnabled = true;
     c.imageSmoothingQuality = "high";
@@ -762,6 +701,7 @@
     var base = Math.max(size / d.w, size / d.h) * 1.15;
     bgCtx.save();
     bgCtx.translate(size / 2, size / 2);
+    if (flipX) bgCtx.scale(-1, 1);
     bgCtx.rotate((rotation * Math.PI) / 180);
     bgCtx.drawImage(photo, (-photo.width * base) / 2, (-photo.height * base) / 2, photo.width * base, photo.height * base);
     bgCtx.restore();
@@ -776,7 +716,7 @@
     }
   }
   function getPreviewBg(size) {
-    var key = [photoId, rotation, currentBlur, size].join("|");
+    var key = [photoId, rotation, flipX ? 1 : 0, currentBlur, size].join("|");
     if (bgCache && bgKey === key) return bgCache;
     bgCache = newCanvas(size);
     var c = bgCache.getContext("2d");
@@ -832,22 +772,20 @@
     ctx.stroke();
     ctx.restore();
 
-    var f = curFrame();
-    if (showFrame && f.ok) {
+    if (showFrame && FRAME.ok) {
       ctx.save();
       ctx.globalAlpha = FRAME_PREVIEW_ALPHA;
-      ctx.drawImage(f.img, 0, 0, VIEW, VIEW);
+      ctx.drawImage(FRAME.img, 0, 0, VIEW, VIEW);
       ctx.restore();
     }
   }
 
   /* ================= Đọc ảnh ================= */
-  /* Chuẩn hoá: đúng chiều EXIF, thu nhỏ nếu quá lớn, trả về canvas */
+  /* Chuẩn hoá: đúng chiều EXIF, thu nhỏ nếu quá lớn, phóng to dần nếu quá nhỏ, trả về canvas */
   function normalise(source, w, h) {
     var maxK = MAX_SIDE / Math.max(w, h);
     var k = Math.min(1, maxK);
     lastUpscaled = false;
-    /* Ảnh quá nhỏ: phóng to dần từng bước ≤2x để mượt hơn, tối thiểu MIN_SIDE ở cạnh ngắn */
     if (Math.min(w, h) < MIN_SIDE) {
       k = Math.min(MIN_SIDE / Math.min(w, h), maxK);
       lastUpscaled = k > 1.05;
@@ -905,21 +843,22 @@
     }
     if (file.size > MAX_FILE) { toast("Ảnh quá lớn (tối đa 25MB). Hãy chọn ảnh khác nhé!", true); return; }
     var token = ++loadToken;
-    dropzone.style.opacity = ".6";
+    dropzone.classList.add("busy");
     decodeFile(file).then(function (c) {
       if (token !== loadToken) return;
-      dropzone.style.opacity = "";
+      dropzone.classList.remove("busy");
       photo = c;
       photoId++;
       bgCache = null;
-      rotation = 0; ox = 0; oy = 0; scale = 1;
+      rotation = 0; ox = 0; oy = 0; scale = 1; flipX = false;
       zoomSlider.min = String(minimumScale());
       zoomSlider.max = String(MAX_ZOOM);
       zoomSlider.value = "1";
       blurSlider.value = String(currentBlur);
       blurValue.textContent = String(currentBlur);
       btnToggleFrame.setAttribute("aria-pressed", showFrame ? "true" : "false");
-      $("btnFill").setAttribute("aria-pressed", fillMirror ? "true" : "false");
+      btnFill.setAttribute("aria-pressed", fillMirror ? "true" : "false");
+      btnFlip.setAttribute("aria-pressed", "false");
       if (lastUpscaled) toast("Ảnh hơi nhỏ nên đã được tự động phóng to");
       lastBlob = null;
       hint.classList.remove("hide");
@@ -929,7 +868,7 @@
       hintTimer = setTimeout(function () { hint.classList.add("hide"); }, 3500);
     }).catch(function () {
       if (token !== loadToken) return;
-      dropzone.style.opacity = "";
+      dropzone.classList.remove("busy");
       toast("Không đọc được ảnh (ảnh HEIC có thể chưa được hỗ trợ). Vui lòng chọn ảnh JPG/PNG.", true);
     });
   }
@@ -997,8 +936,9 @@
       var pts = Array.from(pointers.values());
       var dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       var mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
-      if (pinchDist > 0) {
-        setScale(scale * (dist / pinchDist));
+      if (pinchDist > 0 && pinchMid) {
+        /* thu phóng quanh điểm giữa hai ngón, đồng thời kéo theo chuyển động của điểm giữa */
+        zoomAt(scale * (dist / pinchDist), mid.x * k - VIEW / 2, mid.y * k - VIEW / 2);
         ox += (mid.x - pinchMid.x) * k;
         oy += (mid.y - pinchMid.y) * k;
       }
@@ -1009,23 +949,20 @@
   function endPointer(e) {
     pointers.delete(e.pointerId);
     pinchDist = 0; pinchMid = null;
-    /* Khi nhấc 1 ngón trong lúc chụm, các ngón còn lại tiếp tục kéo mượt */
-    if (pointers.size === 1) {
-      var id = pointers.keys().next().value;
-      pointers.set(id, pointers.get(id));
-    }
   }
   canvas.addEventListener("pointerup", endPointer);
   canvas.addEventListener("pointercancel", endPointer);
   canvas.addEventListener("wheel", function (e) {
     if (!photo) return;
     e.preventDefault();
-    setScale(scale * Math.exp(-e.deltaY * 0.0012));
+    var p = pos(e), k = cssScale();
+    zoomAt(scale * Math.exp(-e.deltaY * 0.0012), p.x * k - VIEW / 2, p.y * k - VIEW / 2);
+    hideHint();
     requestDraw();
   }, { passive: false });
   canvas.addEventListener("dblclick", function () { resetPosition(); toast("Đã căn giữa"); });
 
-  /* Bàn phím: mũi tên di chuyển, +/- thu phóng, 0 căn giữa, [ ] xoay */
+  /* Bàn phím: mũi tên di chuyển, +/- thu phóng, 0 căn giữa, [ ] xoay, F lật */
   canvas.addEventListener("keydown", function (e) {
     if (!photo) return;
     var step = e.shiftKey ? 40 : 12, handled = true;
@@ -1034,17 +971,21 @@
       case "ArrowRight": ox += step; break;
       case "ArrowUp": oy -= step; break;
       case "ArrowDown": oy += step; break;
-      case "+": case "=": setScale(scale * 1.06); break;
-      case "-": case "_": setScale(scale / 1.06); break;
+      case "+": case "=": zoomAt(scale * 1.06, 0, 0); break;
+      case "-": case "_": zoomAt(scale / 1.06, 0, 0); break;
       case "0": resetPosition(); break;
       case "[": rotate(-90); break;
       case "]": rotate(90); break;
+      case "f": case "F": toggleFlip(); break;
       default: handled = false;
     }
     if (handled) { e.preventDefault(); hideHint(); requestDraw(); }
   });
 
-  zoomSlider.addEventListener("input", function () { scale = parseFloat(zoomSlider.value); requestDraw(); });
+  zoomSlider.addEventListener("input", function () {
+    zoomAt(parseFloat(zoomSlider.value), 0, 0);
+    requestDraw();
+  });
   blurSlider.addEventListener("input", function () {
     currentBlur = parseFloat(blurSlider.value);
     blurValue.textContent = String(currentBlur);
@@ -1058,11 +999,16 @@
     setScale(scale);
     requestDraw();
   }
+  function toggleFlip() {
+    flipX = !flipX;
+    btnFlip.setAttribute("aria-pressed", flipX ? "true" : "false");
+    requestDraw();
+  }
   $("btnRotateLeft").addEventListener("click", function () { rotate(-90); });
   $("btnRotateRight").addEventListener("click", function () { rotate(90); });
+  btnFlip.addEventListener("click", toggleFlip);
   $("btnCenter").addEventListener("click", function () { resetPosition(); toast("Đã căn giữa"); });
   btnToggleFrame.addEventListener("click", function () { setShowFrame(!showFrame); });
-  var btnFill = $("btnFill");
   btnFill.addEventListener("click", function () {
     fillMirror = !fillMirror;
     btnFill.setAttribute("aria-pressed", fillMirror ? "true" : "false");
@@ -1146,8 +1092,7 @@
     c.clip();
     c.drawImage(soft, 0, 0);
     c.restore();
-    var f = curFrame();
-    if (f.ok) c.drawImage(f.img, 0, 0, OUT, OUT);
+    if (FRAME.ok) c.drawImage(FRAME.img, 0, 0, OUT, OUT);
     return out;
   }
 
@@ -1155,37 +1100,32 @@
     toast("Trình duyệt chặn xuất ảnh khi mở file trực tiếp. Hãy chạy trang qua GitHub Pages hoặc một hosting (http://...).", true);
   }
 
-  $("btnGenerate").addEventListener("click", function () {
-    if (!photo) return;
-    var f = curFrame();
-    if (!f.ok) { toast("Không tìm thấy file " + f.src + " trong cùng thư mục với index.html!", true); return; }
-    var btn = this;
-    btn.disabled = true;
+  btnGenerate.addEventListener("click", function () {
+    if (!photo || generating) return;
+    if (!FRAME.ok) { toast("Không tìm thấy file " + FRAME.src + " trong cùng thư mục với index.html!", true); return; }
+    generating = true;
+    btnGenerate.disabled = true;
     spinner.className = "spinner-overlay on";
+    function done() { generating = false; btnGenerate.disabled = false; spinner.className = "spinner-overlay"; }
     /* Chờ 2 khung hình để spinner kịp hiển thị trước khi xử lý nặng */
     requestAnimationFrame(function () { requestAnimationFrame(function () {
       try {
         var out = compose();
         out.toBlob(function (blob) {
-          btn.disabled = false;
-          if (!blob) {
-            spinner.className = "spinner-overlay";
-            toast("Không tạo được tệp ảnh.", true);
-            return;
-          }
+          if (!blob) { done(); toast("Không tạo được tệp ảnh.", true); return; }
           lastBlob = blob;
           if (resultUrl) URL.revokeObjectURL(resultUrl);
           resultUrl = URL.createObjectURL(blob);
           resultImg.onload = function () {
-            spinner.className = "spinner-overlay";
+            done();
             updateShareBtn();
             showStage(2);
           };
+          resultImg.onerror = function () { done(); toast("Không hiển thị được ảnh kết quả.", true); };
           resultImg.src = resultUrl;
         }, "image/jpeg", 0.95);
       } catch (err) {
-        btn.disabled = false;
-        spinner.className = "spinner-overlay";
+        done();
         if (err && err.name === "SecurityError") securityMsg();
         else toast("Không tạo được ảnh: " + (err && err.message ? err.message : "lỗi không rõ"), true);
       }
@@ -1234,7 +1174,7 @@
   canvas.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   window.addEventListener("resize", function () { if (currentStage === 1) requestDraw(); });
 
-  buildPicker();
+  loadFrame();
   showStage(0);
 })();
 </script>
