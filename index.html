@@ -2,10 +2,13 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#2b4ea2" />
 <title>Khung ảnh kỷ niệm 20 năm – Trường THPT Tam Dương II (2006 – 2026)</title>
 <meta name="description" content="Tạo khung avatar kỷ niệm 20 năm thành lập Trường THPT Tam Dương II (2006 – 2026). Chọn ảnh, chọn khung, cắt ghép 1:1 và tải về máy chỉ trong vài chạm." />
+<meta property="og:title" content="Khung ảnh kỷ niệm 20 năm – THPT Tam Dương II" />
+<meta property="og:description" content="Tạo avatar kỷ niệm 20 năm thành lập Trường THPT Tam Dương II (2006 – 2026) ngay trên điện thoại." />
+<meta property="og:type" content="website" />
 <style>
   :root {
     --brand: #2b4ea2;
@@ -38,6 +41,7 @@
     user-select: none;
   }
   button { font-family: inherit; }
+  :focus-visible { outline: 3px solid rgba(43,78,162,.55); outline-offset: 2px; }
 
   /* ---------- Header ---------- */
   .site-header {
@@ -123,8 +127,9 @@
   .steps li.done span { color: var(--brand); font-weight: 600; }
 
   .card-body { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px; }
-  .stage { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+  .stage { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; animation: fadeIn .25s ease; }
   .stage[hidden] { display: none !important; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   /* ---------- Upload ---------- */
   .dropzone {
@@ -228,6 +233,24 @@
     transition: opacity .4s;
   }
   .gesture-hint.hide { opacity: 0; }
+  .canvas-tools {
+    position: absolute;
+    top: 8px; right: 8px;
+    display: flex; gap: 6px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px;
+    border-radius: 999px;
+    border: 0;
+    background: rgba(20,38,79,.68);
+    color: #fff;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chip svg { width: 17px; height: 17px; }
+  .chip[aria-pressed="false"] { background: rgba(20,38,79,.4); opacity: .8; }
 
   .frame-picker { flex: none; display: flex; gap: 8px; }
   .frame-opt {
@@ -361,7 +384,11 @@
     padding: 2px 12px calc(6px + env(safe-area-inset-bottom));
   }
   @media (max-height: 640px) { .site-footer { display: none; } }
+  .noscript { padding: 24px; text-align: center; color: var(--flag-deep); font-weight: 600; }
   [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -386,6 +413,8 @@
     </ol>
 
     <div class="card-body">
+      <noscript><p class="noscript">Trang cần bật JavaScript để hoạt động.</p></noscript>
+
       <!-- BƯỚC 1 -->
       <div class="stage" id="stageUpload">
         <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Chọn ảnh từ thiết bị">
@@ -393,7 +422,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="30" height="30" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
           </span>
           <span class="label">Chạm để chọn ảnh của bạn</span>
-          <span class="sub">JPG, PNG, WebP • tối đa 25MB</span>
+          <span class="sub">JPG, PNG, WebP, HEIC • tối đa 25MB<br>Có thể kéo thả hoặc dán ảnh (Ctrl + V)</span>
         </div>
         <button type="button" class="btn" id="btnCamera">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
@@ -406,11 +435,22 @@
       <div class="stage" id="stageCrop" hidden>
         <div class="view-area">
           <div class="square">
-            <canvas id="cropCanvas" width="720" height="720" aria-label="Vùng cắt ảnh vuông 1:1"></canvas>
+            <canvas id="cropCanvas" width="720" height="720" tabindex="0" aria-label="Vùng cắt ảnh vuông 1:1. Dùng phím mũi tên để di chuyển, phím + và - để thu phóng, phím 0 để căn giữa."></canvas>
+            <div class="canvas-tools">
+              <button type="button" class="chip" id="btnFill" aria-pressed="true" aria-label="Lấp vùng trống bằng hiệu ứng gương hoặc nền mờ" title="Lấp vùng trống: gương / nền mờ">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="M8 7 3 12l5 5V7z"/><path d="m16 7 5 5-5 5V7z"/></svg>
+              </button>
+              <button type="button" class="chip" id="btnToggleFrame" aria-pressed="true" aria-label="Ẩn hoặc hiện khung khi xem trước" title="Ẩn/hiện khung">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button type="button" class="chip" id="btnCenter" aria-label="Căn giữa lại" title="Căn giữa lại">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+              </button>
+            </div>
             <div class="gesture-hint" id="gestureHint">Kéo để di chuyển • chụm hai ngón để thu phóng</div>
             <div class="spinner-overlay" id="cropSpinner">
               <div class="spinner" aria-hidden="true"></div>
-              <span>Đang ghép khung kỷ niệm...</span>
+              <span id="spinnerText">Đang ghép khung kỷ niệm...</span>
             </div>
           </div>
         </div>
@@ -489,27 +529,41 @@
   "use strict";
 
   /* ================= Cấu hình ================= */
-  var OUT = 1080;
+  var OUT = 1080;              // kích thước ảnh xuất ra
   var CX = OUT / 2;
-  var AVATAR_R = 470;
-  var RIM_START = 380;
-  var VIEW = 720;
+  var HOLE_R = 382;            // bán kính lỗ trống thật của khung (đo từ khung1/khung2.png)
+  var AVATAR_R = 402;          // ảnh được cắt rộng hơn lỗ một chút, phần dư nằm dưới viền xanh của khung
+  var RIM_START = 345;         // bắt đầu làm mềm viền
+  var VIEW = 720;              // hệ toạ độ vùng xem trước
   var MAX_FILE = 25 * 1024 * 1024;
-  var BLUR_BG = 18;
+  var MAX_SIDE = 2560;         // thu nhỏ ảnh quá lớn để tránh tràn bộ nhớ trên điện thoại
+  var MIN_SIDE = OUT;          // ảnh có cạnh ngắn nhỏ hơn mức này sẽ được tự động phóng to
+  var MAX_ZOOM = 4;
+  var DEFAULT_BLUR = 24;
   var BLUR_RING = 1.2;
+  var FRAME_PREVIEW_ALPHA = 0.92;
   var FILE_NAME = "khung-anh-20-nam-thpt-tam-duong-2.jpg";
 
-  /* 3 kiểu khung (khung1 có dự phòng khung.png cho bản cũ) */
+  /* 2 kiểu khung (khung1 có dự phòng khung.png cho bản cũ) */
   var FRAMES = [
     { src: "khung1.png", fallback: "khung.png", name: "Khung 1" },
-    { src: "khung2.png", name: "Khung 2" },
-    { src: "khung3.png", name: "Khung 3" }
+    { src: "khung2.png", name: "Khung 2" }
   ];
+
+  /* ================= Lưu tuỳ chọn ================= */
+  function store(key, val) { try { localStorage.setItem(key, String(val)); } catch (e) {} }
+  function load(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+
   var frameIndex = 0;
-  try {
-    var saved = parseInt(localStorage.getItem("khung20nam"), 10);
-    if (saved >= 0 && saved < FRAMES.length) frameIndex = saved;
-  } catch (e) {}
+  var savedFrame = parseInt(load("khung20nam"), 10);
+  if (savedFrame >= 0 && savedFrame < FRAMES.length) frameIndex = savedFrame;
+
+  var currentBlur = DEFAULT_BLUR;
+  var savedBlur = parseFloat(load("khung20nam_blur"));
+  if (savedBlur >= 0 && savedBlur <= 60) currentBlur = savedBlur;
+  var showFrame = load("khung20nam_show") !== "0";
+  var fillMirror = load("khung20nam_fill") !== "blur";   // mặc định: lấp vùng trống bằng hiệu ứng gương
+  var lastUpscaled = false;
 
   /* ================= Phần tử ================= */
   function $(id) { return document.getElementById(id); }
@@ -517,18 +571,21 @@
   var dropzone = $("dropzone"), fileInput = $("fileInput"), cameraInput = $("cameraInput");
   var canvas = $("cropCanvas"), ctx = canvas.getContext("2d");
   var zoomSlider = $("zoomSlider"), blurSlider = $("blurSlider"), blurValue = $("blurValue");
-  var resultImg = $("resultImg"), toastEl = $("toast"), spinner = $("cropSpinner");
+  var resultImg = $("resultImg"), toastEl = $("toast"), spinner = $("cropSpinner"), spinnerText = $("spinnerText");
   var hint = $("gestureHint"), picker = $("framePicker");
-  var btnShare = $("btnShare");
+  var btnShare = $("btnShare"), btnToggleFrame = $("btnToggleFrame");
   var stepItems = document.querySelectorAll("#steps li[data-step]");
 
-  var photo = null, photoUrl = null;
+  var photo = null;               // canvas chứa ảnh đã chuẩn hoá (đúng chiều, đã thu nhỏ)
   var lastBlob = null, resultUrl = null;
-  var currentBackgroundBlur = BLUR_BG;
-  var currentRingBlur = BLUR_RING;
   var scale = 1, ox = 0, oy = 0, rotation = 0;
-  var toastTimer = null, currentStage = 0;
+  var toastTimer = null, hintTimer = null, currentStage = 0;
   var drawQueued = false;
+  var loadToken = 0;
+
+  /* Cache nền mờ cho xem trước: chỉ tính lại khi đổi ảnh / xoay / độ mờ */
+  var bgCache = null, bgKey = "";
+  var photoId = 0;
 
   /* ================= Tải khung ================= */
   function loadFrame(f, thumbImg, optEl) {
@@ -579,11 +636,19 @@
       f.btn.classList.toggle("active", k === i);
       f.btn.setAttribute("aria-checked", k === i ? "true" : "false");
     });
-    try { localStorage.setItem("khung20nam", String(i)); } catch (e) {}
+    store("khung20nam", i);
     if (!FRAMES[i].ok) toast("Chưa tìm thấy file " + FRAMES[i].src + " cùng thư mục với index.html", true);
+    if (!showFrame) setShowFrame(true);
     requestDraw();
   }
   function curFrame() { return FRAMES[frameIndex]; }
+
+  function setShowFrame(v) {
+    showFrame = v;
+    btnToggleFrame.setAttribute("aria-pressed", v ? "true" : "false");
+    store("khung20nam_show", v ? "1" : "0");
+    requestDraw();
+  }
 
   /* ================= Tiện ích ================= */
   function toast(msg, isErr) {
@@ -602,21 +667,26 @@
       stepItems[k].className = n === i ? "active" : (n < i ? "done" : "");
     }
   }
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
   function supportsFilter(c) { return typeof c.filter === "string"; }
+  function newCanvas(w, h) {
+    var c = document.createElement("canvas");
+    c.width = w; c.height = h || w;
+    return c;
+  }
+
+  /* Làm mờ dự phòng cho trình duyệt không hỗ trợ ctx.filter (Safari cũ) */
   function blurSquare(img, size, blurPx) {
     var small = Math.min(64, Math.max(8, Math.round(blurPx * 0.55)));
     var mid = Math.max(small * 6, Math.round(size / 6));
-    var tiny = document.createElement("canvas");
-    tiny.width = tiny.height = small;
+    var tiny = newCanvas(small);
     tiny.getContext("2d").drawImage(img, 0, 0, small, small);
-    var medium = document.createElement("canvas");
-    medium.width = medium.height = mid;
+    var medium = newCanvas(mid);
     var mctx = medium.getContext("2d");
     mctx.imageSmoothingEnabled = true;
     mctx.imageSmoothingQuality = "high";
     mctx.drawImage(tiny, 0, 0, mid, mid);
-    var out = document.createElement("canvas");
-    out.width = out.height = size;
+    var out = newCanvas(size);
     var octx = out.getContext("2d");
     octx.imageSmoothingEnabled = true;
     octx.imageSmoothingQuality = "high";
@@ -624,10 +694,10 @@
     return out;
   }
 
+  /* ================= Hình học ================= */
   function rotatedDims() {
     var r = ((rotation % 360) + 360) % 360;
-    var swap = r === 90 || r === 270;
-    return swap ? { w: photo.height, h: photo.width } : { w: photo.width, h: photo.height };
+    return (r === 90 || r === 270) ? { w: photo.height, h: photo.width } : { w: photo.width, h: photo.height };
   }
   function minimumScale() {
     if (!photo) return 0.1;
@@ -640,31 +710,54 @@
     if (!photo) return;
     var d = rotatedDims();
     var base = Math.max(VIEW / d.w, VIEW / d.h) * scale;
-    var w = d.w * base, h = d.h * base;
-    var limitX = (w + VIEW) / 2 * 1.3;
-    var limitY = (h + VIEW) / 2 * 1.3;
-    if (ox > limitX) ox = limitX;
-    if (ox < -limitX) ox = -limitX;
-    if (oy > limitY) oy = limitY;
-    if (oy < -limitY) oy = -limitY;
+    var limitX = (d.w * base + VIEW) / 2 * 1.3;
+    var limitY = (d.h * base + VIEW) / 2 * 1.3;
+    ox = clamp(ox, -limitX, limitX);
+    oy = clamp(oy, -limitY, limitY);
+  }
+  function setScale(s) {
+    scale = clamp(s, minimumScale(), MAX_ZOOM);
+    zoomSlider.value = String(scale);
+  }
+  function resetPosition() {
+    ox = 0; oy = 0; scale = 1;
+    zoomSlider.min = String(minimumScale());
+    zoomSlider.value = "1";
+    requestDraw();
   }
 
-  function drawPhoto(targetCtx, size, photoScale, offsetX, offsetY) {
+  /* ================= Vẽ ================= */
+  function drawPhoto(c, size, photoScale, offsetX, offsetY, mirror) {
     var d = rotatedDims();
     var base = Math.max(size / d.w, size / d.h) * photoScale;
     var k = size / VIEW;
-    targetCtx.save();
-    targetCtx.translate(size / 2 + offsetX * k, size / 2 + offsetY * k);
-    targetCtx.rotate((rotation * Math.PI) / 180);
-    targetCtx.imageSmoothingEnabled = true;
-    targetCtx.imageSmoothingQuality = "high";
-    targetCtx.drawImage(photo, (-photo.width * base) / 2, (-photo.height * base) / 2, photo.width * base, photo.height * base);
-    targetCtx.restore();
+    var pw = photo.width * base, ph = photo.height * base;
+    c.save();
+    c.translate(size / 2 + offsetX * k, size / 2 + offsetY * k);
+    c.rotate((rotation * Math.PI) / 180);
+    c.imageSmoothingEnabled = true;
+    c.imageSmoothingQuality = "high";
+    if (mirror) {
+      /* Lát gương: các ô liền kề lật đối xứng qua cạnh chung, lấp kín vùng trống quanh ảnh */
+      var ext = size * 0.75 + (Math.abs(offsetX) + Math.abs(offsetY)) * k;
+      var nx = Math.min(12, Math.ceil(ext / pw)), ny = Math.min(12, Math.ceil(ext / ph));
+      for (var j = -ny; j <= ny; j++) {
+        for (var i = -nx; i <= nx; i++) {
+          if (i === 0 && j === 0) continue;
+          c.save();
+          c.translate(i * pw, j * ph);
+          c.scale(i % 2 ? -1 : 1, j % 2 ? -1 : 1);
+          c.drawImage(photo, -pw / 2 - 0.5, -ph / 2 - 0.5, pw + 1, ph + 1);
+          c.restore();
+        }
+      }
+    }
+    c.drawImage(photo, -pw / 2, -ph / 2, pw, ph);
+    c.restore();
   }
-  function drawCoverBackground(targetCtx, size, blurPx) {
-    var background = document.createElement("canvas");
-    background.width = background.height = size;
-    var bgCtx = background.getContext("2d");
+  function drawCoverBackground(c, size, blurPx) {
+    var bg = newCanvas(size);
+    var bgCtx = bg.getContext("2d");
     var d = rotatedDims();
     var base = Math.max(size / d.w, size / d.h) * 1.15;
     bgCtx.save();
@@ -672,15 +765,26 @@
     bgCtx.rotate((rotation * Math.PI) / 180);
     bgCtx.drawImage(photo, (-photo.width * base) / 2, (-photo.height * base) / 2, photo.width * base, photo.height * base);
     bgCtx.restore();
-    if (blurPx <= 0) { targetCtx.drawImage(background, 0, 0); return; }
-    if (supportsFilter(targetCtx)) {
-      targetCtx.save();
-      targetCtx.filter = "blur(" + blurPx + "px)";
-      targetCtx.drawImage(background, 0, 0);
-      targetCtx.restore();
+    if (blurPx <= 0) { c.drawImage(bg, 0, 0); return; }
+    if (supportsFilter(c)) {
+      c.save();
+      c.filter = "blur(" + blurPx + "px)";
+      c.drawImage(bg, 0, 0);
+      c.restore();
     } else {
-      targetCtx.drawImage(blurSquare(background, size, blurPx), 0, 0);
+      c.drawImage(blurSquare(bg, size, blurPx), 0, 0);
     }
+  }
+  function getPreviewBg(size) {
+    var key = [photoId, rotation, currentBlur, size].join("|");
+    if (bgCache && bgKey === key) return bgCache;
+    bgCache = newCanvas(size);
+    var c = bgCache.getContext("2d");
+    c.fillStyle = "#14264f";
+    c.fillRect(0, 0, size, size);
+    drawCoverBackground(c, size, currentBlur * 0.6 * (size / VIEW));
+    bgKey = key;
+    return bgCache;
   }
 
   function requestDraw() {
@@ -690,17 +794,23 @@
   }
 
   function draw() {
-    if (!photo) return;
+    if (!photo || currentStage !== 1) return;
     clampOffsets();
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    if (canvas.width !== VIEW * dpr) { canvas.width = VIEW * dpr; canvas.height = VIEW * dpr; }
+    var px = Math.round(VIEW * dpr);
+    if (canvas.width !== px) { canvas.width = px; canvas.height = px; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, VIEW, VIEW);
-    ctx.fillStyle = "#14264f";
-    ctx.fillRect(0, 0, VIEW, VIEW);
-    drawCoverBackground(ctx, VIEW, currentBackgroundBlur * 0.6);
-    drawPhoto(ctx, VIEW, scale, ox, oy);
-    var R = VIEW * (AVATAR_R / OUT);
+    if (fillMirror) {
+      ctx.fillStyle = "#14264f";
+      ctx.fillRect(0, 0, VIEW, VIEW);
+      drawPhoto(ctx, VIEW, scale, ox, oy, true);
+    } else {
+      ctx.drawImage(getPreviewBg(px), 0, 0, VIEW, VIEW);
+      drawPhoto(ctx, VIEW, scale, ox, oy, false);
+    }
+
+    var R = VIEW * (HOLE_R / OUT);
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, VIEW, VIEW);
@@ -721,58 +831,149 @@
     ctx.moveTo(VIEW / 2, VIEW / 2 - R); ctx.lineTo(VIEW / 2, VIEW / 2 + R);
     ctx.stroke();
     ctx.restore();
+
     var f = curFrame();
-    if (f.ok) { ctx.save(); ctx.globalAlpha = 0.55; ctx.drawImage(f.img, 0, 0, VIEW, VIEW); ctx.restore(); }
+    if (showFrame && f.ok) {
+      ctx.save();
+      ctx.globalAlpha = FRAME_PREVIEW_ALPHA;
+      ctx.drawImage(f.img, 0, 0, VIEW, VIEW);
+      ctx.restore();
+    }
   }
 
-  /* ================= Chọn ảnh ================= */
+  /* ================= Đọc ảnh ================= */
+  /* Chuẩn hoá: đúng chiều EXIF, thu nhỏ nếu quá lớn, trả về canvas */
+  function normalise(source, w, h) {
+    var maxK = MAX_SIDE / Math.max(w, h);
+    var k = Math.min(1, maxK);
+    lastUpscaled = false;
+    /* Ảnh quá nhỏ: phóng to dần từng bước ≤2x để mượt hơn, tối thiểu MIN_SIDE ở cạnh ngắn */
+    if (Math.min(w, h) < MIN_SIDE) {
+      k = Math.min(MIN_SIDE / Math.min(w, h), maxK);
+      lastUpscaled = k > 1.05;
+    }
+    var tw = Math.max(1, Math.round(w * k)), th = Math.max(1, Math.round(h * k));
+    var cur = source, cw = w, ch = h;
+    if (tw <= w && th <= h) {
+      var c1 = newCanvas(tw, th);
+      var c1c = c1.getContext("2d");
+      c1c.imageSmoothingEnabled = true;
+      c1c.imageSmoothingQuality = "high";
+      c1c.drawImage(source, 0, 0, tw, th);
+      cur = c1;
+    } else {
+      while (cw < tw || ch < th) {
+        var nw = Math.min(tw, Math.round(cw * 2)), nh = Math.min(th, Math.round(ch * 2));
+        var s = newCanvas(nw, nh);
+        var sc2 = s.getContext("2d");
+        sc2.imageSmoothingEnabled = true;
+        sc2.imageSmoothingQuality = "high";
+        sc2.drawImage(cur, 0, 0, nw, nh);
+        cur = s; cw = nw; ch = nh;
+      }
+    }
+    if (source.close) { try { source.close(); } catch (e) {} }
+    return cur;
+  }
+  function decodeFile(file) {
+    return new Promise(function (resolve, reject) {
+      function viaImage() {
+        var url = URL.createObjectURL(file);
+        var im = new Image();
+        im.onload = function () {
+          try { resolve(normalise(im, im.naturalWidth, im.naturalHeight)); }
+          catch (e) { reject(e); }
+          URL.revokeObjectURL(url);
+        };
+        im.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
+        im.src = url;
+      }
+      if (window.createImageBitmap) {
+        createImageBitmap(file, { imageOrientation: "from-image" }).then(function (bmp) {
+          resolve(normalise(bmp, bmp.width, bmp.height));
+        }).catch(viaImage);
+      } else {
+        viaImage();
+      }
+    });
+  }
+
   function handleFile(file) {
     if (!file) return;
-    if (!/^image\//.test(file.type)) { toast("Vui lòng chọn một tệp ảnh (JPG, PNG, WebP...).", true); return; }
+    if (!/^image\//.test(file.type) && !/\.(heic|heif|jpe?g|png|webp|gif|bmp)$/i.test(file.name || "")) {
+      toast("Vui lòng chọn một tệp ảnh (JPG, PNG, WebP...).", true); return;
+    }
     if (file.size > MAX_FILE) { toast("Ảnh quá lớn (tối đa 25MB). Hãy chọn ảnh khác nhé!", true); return; }
-    if (photoUrl) URL.revokeObjectURL(photoUrl);
-    photoUrl = URL.createObjectURL(file);
-    var im = new Image();
-    im.onload = function () {
-      photo = im;
+    var token = ++loadToken;
+    dropzone.style.opacity = ".6";
+    decodeFile(file).then(function (c) {
+      if (token !== loadToken) return;
+      dropzone.style.opacity = "";
+      photo = c;
+      photoId++;
+      bgCache = null;
       rotation = 0; ox = 0; oy = 0; scale = 1;
       zoomSlider.min = String(minimumScale());
-      zoomSlider.max = "4";
+      zoomSlider.max = String(MAX_ZOOM);
       zoomSlider.value = "1";
-      blurSlider.value = String(currentBackgroundBlur);
-      blurValue.textContent = String(currentBackgroundBlur);
+      blurSlider.value = String(currentBlur);
+      blurValue.textContent = String(currentBlur);
+      btnToggleFrame.setAttribute("aria-pressed", showFrame ? "true" : "false");
+      $("btnFill").setAttribute("aria-pressed", fillMirror ? "true" : "false");
+      if (lastUpscaled) toast("Ảnh hơi nhỏ nên đã được tự động phóng to");
       lastBlob = null;
       hint.classList.remove("hide");
       showStage(1);
       requestDraw();
-      setTimeout(function () { hint.classList.add("hide"); }, 3500);
-    };
-    im.onerror = function () { toast("Không đọc được ảnh. Vui lòng chọn ảnh khác.", true); };
-    im.src = photoUrl;
+      clearTimeout(hintTimer);
+      hintTimer = setTimeout(function () { hint.classList.add("hide"); }, 3500);
+    }).catch(function () {
+      if (token !== loadToken) return;
+      dropzone.style.opacity = "";
+      toast("Không đọc được ảnh (ảnh HEIC có thể chưa được hỗ trợ). Vui lòng chọn ảnh JPG/PNG.", true);
+    });
   }
 
   dropzone.addEventListener("click", function () { fileInput.click(); });
   dropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
-  dropzone.addEventListener("dragover", function (e) { e.preventDefault(); dropzone.classList.add("drag"); });
-  dropzone.addEventListener("dragleave", function () { dropzone.classList.remove("drag"); });
-  dropzone.addEventListener("drop", function (e) {
-    e.preventDefault(); dropzone.classList.remove("drag");
-    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-  });
   $("btnCamera").addEventListener("click", function () { cameraInput.click(); });
   fileInput.addEventListener("change", function () { handleFile(fileInput.files[0]); fileInput.value = ""; });
   cameraInput.addEventListener("change", function () { handleFile(cameraInput.files[0]); cameraInput.value = ""; });
+
+  /* Kéo thả ảnh vào bất cứ đâu trên trang */
+  window.addEventListener("dragover", function (e) { e.preventDefault(); if (currentStage === 0) dropzone.classList.add("drag"); });
+  window.addEventListener("dragleave", function (e) { if (!e.relatedTarget) dropzone.classList.remove("drag"); });
+  window.addEventListener("drop", function (e) {
+    e.preventDefault();
+    dropzone.classList.remove("drag");
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  /* Dán ảnh từ clipboard */
+  window.addEventListener("paste", function (e) {
+    var items = (e.clipboardData && e.clipboardData.items) || [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === "file" && /^image\//.test(items[i].type)) {
+        handleFile(items[i].getAsFile());
+        return;
+      }
+    }
+  });
 
   /* ================= Kéo / chụm / cuộn ================= */
   var pointers = new Map();
   var pinchDist = 0, pinchMid = null;
   function cssScale() { return VIEW / (canvas.getBoundingClientRect().width || VIEW); }
+  function pos(e) {
+    var r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
   function hideHint() { hint.classList.add("hide"); }
 
   canvas.addEventListener("pointerdown", function (e) {
     if (!photo) return;
-    canvas.setPointerCapture(e.pointerId);
-    pointers.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    pointers.set(e.pointerId, pos(e));
     if (pointers.size === 2) {
       var pts = Array.from(pointers.values());
       pinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -784,64 +985,106 @@
   canvas.addEventListener("pointermove", function (e) {
     if (!pointers.has(e.pointerId) || !photo) return;
     var prev = pointers.get(e.pointerId);
+    var cur = pos(e);
     var k = cssScale();
     if (pointers.size === 1) {
-      ox += (e.offsetX - prev.x) * k;
-      oy += (e.offsetY - prev.y) * k;
-      pointers.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
+      ox += (cur.x - prev.x) * k;
+      oy += (cur.y - prev.y) * k;
+      pointers.set(e.pointerId, cur);
       requestDraw();
     } else if (pointers.size === 2) {
-      pointers.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
+      pointers.set(e.pointerId, cur);
       var pts = Array.from(pointers.values());
       var dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       var mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
       if (pinchDist > 0) {
-        scale = Math.min(4, Math.max(minimumScale(), scale * (dist / pinchDist)));
+        setScale(scale * (dist / pinchDist));
         ox += (mid.x - pinchMid.x) * k;
         oy += (mid.y - pinchMid.y) * k;
-        zoomSlider.value = String(scale);
       }
       pinchDist = dist; pinchMid = mid;
       requestDraw();
     }
   });
-  function endPointer(e) { pointers.delete(e.pointerId); pinchDist = 0; pinchMid = null; }
+  function endPointer(e) {
+    pointers.delete(e.pointerId);
+    pinchDist = 0; pinchMid = null;
+    /* Khi nhấc 1 ngón trong lúc chụm, các ngón còn lại tiếp tục kéo mượt */
+    if (pointers.size === 1) {
+      var id = pointers.keys().next().value;
+      pointers.set(id, pointers.get(id));
+    }
+  }
   canvas.addEventListener("pointerup", endPointer);
   canvas.addEventListener("pointercancel", endPointer);
   canvas.addEventListener("wheel", function (e) {
     if (!photo) return;
     e.preventDefault();
-    scale = Math.min(4, Math.max(minimumScale(), scale * Math.exp(-e.deltaY * 0.0012)));
-    zoomSlider.value = String(scale);
+    setScale(scale * Math.exp(-e.deltaY * 0.0012));
     requestDraw();
   }, { passive: false });
-  canvas.addEventListener("dblclick", function () {
-    ox = 0; oy = 0; scale = 1; zoomSlider.value = "1"; requestDraw(); toast("Đã căn giữa");
+  canvas.addEventListener("dblclick", function () { resetPosition(); toast("Đã căn giữa"); });
+
+  /* Bàn phím: mũi tên di chuyển, +/- thu phóng, 0 căn giữa, [ ] xoay */
+  canvas.addEventListener("keydown", function (e) {
+    if (!photo) return;
+    var step = e.shiftKey ? 40 : 12, handled = true;
+    switch (e.key) {
+      case "ArrowLeft": ox -= step; break;
+      case "ArrowRight": ox += step; break;
+      case "ArrowUp": oy -= step; break;
+      case "ArrowDown": oy += step; break;
+      case "+": case "=": setScale(scale * 1.06); break;
+      case "-": case "_": setScale(scale / 1.06); break;
+      case "0": resetPosition(); break;
+      case "[": rotate(-90); break;
+      case "]": rotate(90); break;
+      default: handled = false;
+    }
+    if (handled) { e.preventDefault(); hideHint(); requestDraw(); }
   });
 
   zoomSlider.addEventListener("input", function () { scale = parseFloat(zoomSlider.value); requestDraw(); });
   blurSlider.addEventListener("input", function () {
-    currentBackgroundBlur = parseFloat(blurSlider.value);
-    blurValue.textContent = String(currentBackgroundBlur);
+    currentBlur = parseFloat(blurSlider.value);
+    blurValue.textContent = String(currentBlur);
     requestDraw();
   });
+  blurSlider.addEventListener("change", function () { store("khung20nam_blur", currentBlur); });
+
   function rotate(deg) {
     rotation = (rotation + deg + 360) % 360;
     zoomSlider.min = String(minimumScale());
+    setScale(scale);
     requestDraw();
   }
   $("btnRotateLeft").addEventListener("click", function () { rotate(-90); });
   $("btnRotateRight").addEventListener("click", function () { rotate(90); });
+  $("btnCenter").addEventListener("click", function () { resetPosition(); toast("Đã căn giữa"); });
+  btnToggleFrame.addEventListener("click", function () { setShowFrame(!showFrame); });
+  var btnFill = $("btnFill");
+  btnFill.addEventListener("click", function () {
+    fillMirror = !fillMirror;
+    btnFill.setAttribute("aria-pressed", fillMirror ? "true" : "false");
+    store("khung20nam_fill", fillMirror ? "mirror" : "blur");
+    toast(fillMirror ? "Vùng trống: hiệu ứng gương" : "Vùng trống: nền mờ");
+    requestDraw();
+  });
   $("btnBack").addEventListener("click", function () { showStage(0); });
   $("btnEdit").addEventListener("click", function () { showStage(1); requestDraw(); });
 
-  /* ================= Ghép ảnh ================= */
+  /* ================= Ghép ảnh xuất ra ================= */
   function getCroppedSquare() {
-    var out = document.createElement("canvas");
-    out.width = out.height = OUT;
+    var out = newCanvas(OUT);
     var c = out.getContext("2d");
-    drawCoverBackground(c, OUT, 36);
-    drawPhoto(c, OUT, scale, ox, oy);
+    if (fillMirror) {
+      c.fillStyle = "#14264f";
+      c.fillRect(0, 0, OUT, OUT);
+      drawPhoto(c, OUT, scale, ox, oy, true);
+    } else {
+      drawCoverBackground(c, OUT, 36);
+      drawPhoto(c, OUT, scale, ox, oy, false);
+    }
     return out;
   }
   function drawBlurredBackground(c, src, size, blurPx) {
@@ -856,8 +1099,7 @@
     }
   }
   function softFocusCanvas(src, size, blurPx) {
-    var cv = document.createElement("canvas");
-    cv.width = cv.height = size;
+    var cv = newCanvas(size);
     var c = cv.getContext("2d");
     c.imageSmoothingEnabled = true;
     c.imageSmoothingQuality = "high";
@@ -871,12 +1113,11 @@
   }
   function compose() {
     var crop = getCroppedSquare();
-    var out = document.createElement("canvas");
-    out.width = out.height = OUT;
+    var out = newCanvas(OUT);
     var c = out.getContext("2d");
     c.imageSmoothingEnabled = true;
     c.imageSmoothingQuality = "high";
-    drawBlurredBackground(c, crop, OUT, currentBackgroundBlur);
+    drawBlurredBackground(c, crop, OUT, currentBlur);
     c.fillStyle = "rgba(255,255,255,0.10)";
     c.fillRect(0, 0, OUT, OUT);
     var halo = c.createRadialGradient(CX, CX, 480, CX, CX, 585);
@@ -891,7 +1132,7 @@
     c.clip();
     c.drawImage(crop, 0, 0);
     c.restore();
-    var soft = softFocusCanvas(crop, OUT, currentRingBlur);
+    var soft = softFocusCanvas(crop, OUT, BLUR_RING);
     var sc = soft.getContext("2d");
     sc.globalCompositeOperation = "destination-in";
     var fade = sc.createRadialGradient(CX, CX, RIM_START, CX, CX, AVATAR_R);
@@ -918,11 +1159,15 @@
     if (!photo) return;
     var f = curFrame();
     if (!f.ok) { toast("Không tìm thấy file " + f.src + " trong cùng thư mục với index.html!", true); return; }
+    var btn = this;
+    btn.disabled = true;
     spinner.className = "spinner-overlay on";
-    setTimeout(function () {
+    /* Chờ 2 khung hình để spinner kịp hiển thị trước khi xử lý nặng */
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
       try {
         var out = compose();
         out.toBlob(function (blob) {
+          btn.disabled = false;
           if (!blob) {
             spinner.className = "spinner-overlay";
             toast("Không tạo được tệp ảnh.", true);
@@ -937,13 +1182,14 @@
             showStage(2);
           };
           resultImg.src = resultUrl;
-        }, "image/jpeg", 0.92);
+        }, "image/jpeg", 0.95);
       } catch (err) {
+        btn.disabled = false;
         spinner.className = "spinner-overlay";
         if (err && err.name === "SecurityError") securityMsg();
         else toast("Không tạo được ảnh: " + (err && err.message ? err.message : "lỗi không rõ"), true);
       }
-    }, 60);
+    }); });
   });
 
   /* ================= Tải / chia sẻ ================= */
@@ -978,15 +1224,14 @@
   });
 
   $("btnReset").addEventListener("click", function () {
-    if (photoUrl) URL.revokeObjectURL(photoUrl);
     if (resultUrl) URL.revokeObjectURL(resultUrl);
-    photo = null; photoUrl = null; lastBlob = null; resultUrl = null;
+    photo = null; lastBlob = null; resultUrl = null; bgCache = null;
     resultImg.removeAttribute("src");
     showStage(0);
   });
 
-  /* Chặn cuộn/zoom ngoài ý muốn trên mobile */
-  document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
+  /* Chặn zoom cử chỉ của trình duyệt chỉ trong vùng cắt */
+  canvas.addEventListener("gesturestart", function (e) { e.preventDefault(); });
   window.addEventListener("resize", function () { if (currentStage === 1) requestDraw(); });
 
   buildPicker();
